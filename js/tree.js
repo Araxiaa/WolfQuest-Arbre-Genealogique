@@ -92,20 +92,33 @@ function drawConnectors(){
   state.unions.filter(u=>u.treeId===treeId).forEach(u=>{
     const A = getWolf(u.wolfA); if(!A||!A.pos) return;
     const B = u.wolfB ? getWolf(u.wolfB) : null;
-    const ac = {x:A.pos.x+CARD_W/2, y:A.pos.y+CARD_H/2};
-    let mid = ac;
+    const aCenter = {x:A.pos.x+CARD_W/2, y:A.pos.y+CARD_H/2};
+    const aBottom = {x:A.pos.x+CARD_W/2, y:A.pos.y+CARD_H};
+    let dropOrigin = aBottom;
     if(B && B.pos){
-      const bc = {x:B.pos.x+CARD_W/2, y:B.pos.y+CARD_H/2};
-      mid = {x:(ac.x+bc.x)/2, y:(ac.y+bc.y)/2};
-      out += glowLine(ac.x,ac.y,bc.x,bc.y, `link-couple ${u.status==='ex'?'link-ex':''}`);
+      const bCenter = {x:B.pos.x+CARD_W/2, y:B.pos.y+CARD_H/2};
+      const bBottom = {x:B.pos.x+CARD_W/2, y:B.pos.y+CARD_H};
+      dropOrigin = {x:(aBottom.x+bBottom.x)/2, y:Math.max(aBottom.y,bBottom.y)};
+      out += glowLine(aCenter.x,aCenter.y,bCenter.x,bCenter.y, `link-couple ${u.status==='ex'?'link-ex':''}`);
     }
+    const childPts = [];
     state.litters.filter(l=>l.unionId===u.id).forEach(li=>{
       li.pupIds.forEach(pid=>{
         const p = getWolf(pid); if(!p||!p.pos) return;
-        const pc = {x:p.pos.x+CARD_W/2, y:p.pos.y+6};
-        out += glowLine(mid.x, mid.y, pc.x, pc.y, 'link-lineage');
+        childPts.push({x:p.pos.x+CARD_W/2, y:p.pos.y});
       });
     });
+    if(childPts.length){
+      const stubY = dropOrigin.y + 28;
+      out += glowLine(dropOrigin.x, dropOrigin.y, dropOrigin.x, stubY, 'link-lineage');
+      const xs = childPts.map(c=>c.x);
+      const minX = Math.min(...xs, dropOrigin.x), maxX = Math.max(...xs, dropOrigin.x);
+      if(maxX-minX>1) out += glowLine(minX, stubY, maxX, stubY, 'link-lineage');
+      out += `<circle class="link-junction" cx="${dropOrigin.x.toFixed(1)}" cy="${stubY.toFixed(1)}" r="3.5"/>`;
+      childPts.forEach(c=>{
+        out += glowLine(c.x, stubY, c.x, c.y, 'link-lineage');
+      });
+    }
   });
   svg.innerHTML = out;
 }
