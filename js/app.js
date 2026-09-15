@@ -173,17 +173,18 @@ function wolfModalHTML(){
   const w = ui.modal.draft;
   const tab = ui.modal.tab;
   const ro = ui.modal.readonly;
-  const tabs = [['info','Infos'],['skills','Compétences'],['perks','Age Perks'],['timeline','Frise de vie'],['unions','Unions']];
+  const tabs = [['info','Infos'],['skills','Compétences'],['perks','Age Perks'],['timeline','Frise de vie'],['family','Famille']];
   return `<div class="overlay" onclick="if(event.target===this) closeModal()">
     <div class="modal">
-      <div class="modal-head"><h3>${ui.modal.isNew?'Nouveau loup':escapeHTML(w.name||'Loup')}${ro?'<span class="ro-badge">Lecture seule</span>':''}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+      <div class="modal-head"><h3>${ui.modal.isNew?'Nouveau loup':'Profil du loup'}${ro?'<span class="ro-badge">Lecture seule</span>':''}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
       <div class="modal-body">
+        ${wolfModalBannerHTML(w)}
         <div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${tab===k?'active':''}" onclick="wolfModalTab('${k}')">${l}</button>`).join('')}</div>
         ${tab==='info'?wolfTabInfo(w,ro):''}
         ${tab==='skills'?wolfTabSkills(w,ro):''}
         ${tab==='perks'?wolfTabPerks(w,ro):''}
         ${tab==='timeline'?wolfTabTimeline(w,ro):''}
-        ${tab==='unions'?wolfTabUnions(w,ro):''}
+        ${tab==='family'?wolfTabFamily(w,ro):''}
       </div>
       <div class="modal-foot">
         <div>${(!ui.modal.isNew && !ro)?`<button class="btn btn-danger btn-sm" onclick="deleteWolfFromModal()">Supprimer ce loup</button>`:''}</div>
@@ -195,15 +196,22 @@ function wolfModalHTML(){
     </div>
   </div>`;
 }
+function wolfModalBannerHTML(w){
+  const color = STATUS_COLORS[w.status]||'#8A8FB0';
+  const photo = w.portrait ? `<img src="${w.portrait}" alt="">` : `<div class="wolf-photo-placeholder">🐾</div>`;
+  const sexIcon = w.sex==='M'?'♂':w.sex==='F'?'♀':'?';
+  return `<div class="wolf-modal-banner">
+    <div class="wolf-photo wolf-photo--lg" style="--status-ring:${color};">${photo}<span class="wolf-sex-badge">${sexIcon}</span></div>
+    <div>
+      <div class="wolf-modal-banner-name">${escapeHTML(w.name)||'Nouveau loup'}</div>
+      ${w.coat?`<div class="wolf-card-coat" style="font-size:13px;">${escapeHTML(w.coat)}</div>`:''}
+      <span class="wolf-status-pill" style="background:${color}22; color:${color}; margin-top:6px;">${w.status||'—'}</span>
+    </div>
+  </div>`;
+}
 function wolfTabInfo(w, ro){
   return `
-    <div class="portrait-row">
-      <div class="portrait-preview">${w.portrait?`<img src="${w.portrait}">`:'<span style="font-size:26px;opacity:.4;">🐾</span>'}</div>
-      ${!ro?`<div>
-        <label class="btn btn-ghost btn-sm file-btn">Choisir une photo<input type="file" accept="image/*" style="display:none" onchange="setPortraitFile(this)"></label>
-        <div class="hint">Portrait principal du loup.</div>
-      </div>`:''}
-    </div>
+    ${!ro?`<div class="field"><label>Photo</label><label class="btn btn-ghost btn-sm file-btn">Choisir une photo<input type="file" accept="image/*" style="display:none" onchange="setPortraitFile(this)"></label></div>`:''}
     <div class="field"><label>Nom</label><input type="text" value="${escapeHTML(w.name)}" oninput="setDraft('name', this.value)" ${ro?'disabled':''}></div>
     <div class="field"><label>Robe (nom du pelage)</label><input type="text" placeholder="Ex : Timber, Arctic, Dawn…" value="${escapeHTML(w.coat)}" oninput="setDraft('coat', this.value)" ${ro?'disabled':''}></div>
     <div class="row2">
@@ -231,6 +239,7 @@ function wolfTabSkills(w, ro){
         <span class="skill-name">${label}</span>
         <div class="skill-stepper">
           ${!ro?`<button class="stepper-btn" onclick="adjustSkill('${key}', -1)">−</button>`:''}
+          <div class="skill-track"><div class="skill-fill" style="width:${((w.skills[key]+2)/4*100).toFixed(0)}%;"></div></div>
           <span class="skill-val">${w.skills[key]>0?'+':''}${w.skills[key]}</span>
           ${!ro?`<button class="stepper-btn" onclick="adjustSkill('${key}', 1)">+</button>`:''}
         </div>
@@ -290,20 +299,41 @@ function wolfTabTimeline(w, ro){
     ${!ro?`<button class="btn btn-ghost btn-sm" onclick="addTimelineEntry()">+ Ajouter une étape</button>`:''}
   `;
 }
-function wolfTabUnions(w, ro){
+function familyChipHTML(p){
+  const photoInner = p.portrait ? `<img src="${p.portrait}">` : '🐾';
+  return `<button class="family-chip" onclick="openWolfModal('${p.id}')">
+    <span class="family-chip-photo">${photoInner}</span>${escapeHTML(p.name)}
+  </button>`;
+}
+function wolfTabFamily(w, ro){
   const exists = state.wolves.some(x=>x.id===w.id);
-  if(!exists){ return `<p class="hint">Enregistre d'abord ce loup pour pouvoir lui créer des unions.</p>`; }
+  if(!exists){ return `<p class="hint">Enregistre d'abord ce loup pour voir ses liens familiaux.</p>`; }
+  const parentLitter = state.litters.find(l=>l.treeId===state.currentTreeId && l.pupIds.includes(w.id));
+  let parents = [];
+  if(parentLitter){
+    const pu = state.unions.find(x=>x.id===parentLitter.unionId);
+    if(pu) parents = [pu.wolfA, pu.wolfB].filter(Boolean).map(id=>getWolf(id)).filter(Boolean);
+  }
   const unions = state.unions.filter(u=>u.treeId===state.currentTreeId && (u.wolfA===w.id||u.wolfB===w.id));
   return `
+    <div class="family-section-title">Parents</div>
+    ${parents.length?`<div class="family-chip-row">${parents.map(p=>familyChipHTML(p)).join('')}</div>`:`<p class="hint">Parents inconnus.</p>`}
+
+    <div class="family-section-title">Partenaires & enfants</div>
     ${unions.length===0?`<p class="hint" style="margin-bottom:12px;">Aucune union enregistrée.</p>`:unions.map(u=>{
       const partnerId = u.wolfA===w.id?u.wolfB:u.wolfA;
       const partner = partnerId?getWolf(partnerId):null;
-      return `<div class="union-list-item">
-        <div class="u-left">
-          <span class="badge ${u.status==='actuelle'?'badge-current':'badge-ex'}">${u.status==='actuelle'?'Actuelle':'Ex'}</span>
-          <span>${partner?escapeHTML(partner.name):'Partenaire inconnu'}</span>
+      const kids = [];
+      state.litters.filter(l=>l.unionId===u.id).forEach(l=> l.pupIds.forEach(pid=>{ const p=getWolf(pid); if(p) kids.push(p); }));
+      return `<div class="union-list-item" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div class="u-left">
+            <span class="badge ${u.status==='actuelle'?'badge-current':'badge-ex'}">${u.status==='actuelle'?'Actuelle':'Ex'}</span>
+            ${partner?familyChipHTML(partner):'<span class="hint">Partenaire inconnu</span>'}
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openUnionModal('${u.id}', '${w.id}')">${ro?'Voir':'Gérer'}</button>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="openUnionModal('${u.id}', '${w.id}')">${ro?'Voir':'Gérer'}</button>
+        ${kids.length?`<div class="family-chip-row" style="padding-left:2px;">${kids.map(k=>familyChipHTML(k)).join('')}</div>`:''}
       </div>`;
     }).join('')}
     ${!ro?`<button class="btn btn-amber btn-sm" onclick="openUnionModal(null, '${w.id}')">+ Nouvelle union</button>`:''}

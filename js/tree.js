@@ -13,6 +13,15 @@ function ensurePositions(treeId){
     if(visiting.has(wolfId)){ const x=nextX; nextX+=SPACING_X; return x; }
     visiting.add(wolfId);
     const unions = state.unions.filter(u=>u.treeId===treeId && (u.wolfA===wolfId||u.wolfB===wolfId));
+    for(const u of unions){
+      const partnerId = u.wolfA===wolfId ? u.wolfB : u.wolfA;
+      const partner = partnerId ? getWolf(partnerId) : null;
+      if(partner && partner.pos){
+        const side = (u.wolfA===wolfId) ? -1 : 1;
+        w.pos = { x: Math.max(40, partner.pos.x + side*(CARD_W+40)), y: partner.pos.y };
+        return w.pos.x;
+      }
+    }
     let childIds = [];
     unions.forEach(u=>{ state.litters.filter(l=>l.unionId===u.id).forEach(l=> childIds.push(...l.pupIds)); });
     childIds = [...new Set(childIds)].filter(cid=>cid!==wolfId);
