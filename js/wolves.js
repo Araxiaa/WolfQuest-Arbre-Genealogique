@@ -1,11 +1,11 @@
 /* ---------- Wolf modal ---------- */
 function blankWolf(treeId){
-  return { id:uid(), treeId, name:'', sex:'?', status:'Vivant', pack:'', notes:'', portrait:null, pos:null,
+  return { id:uid(), treeId, name:'', coat:'', sex:'?', status:'Vivant', pack:'', notes:'', portrait:null, pos:null,
     skills:{force:0,endurance:0,vitesse:0,vie:0}, agePerks:[], timeline:[] };
 }
 function openWolfModal(id){
   const w = id ? JSON.parse(JSON.stringify(getWolf(id))) : blankWolf(state.currentTreeId);
-  ui.modal = { type:'wolf', isNew: !id, draft:w, tab:'info' };
+  ui.modal = { type:'wolf', isNew: !id, draft:w, tab:'info', readonly: ui.mode!=='edit' };
   render();
 }
 function wolfModalTab(tab){ ui.modal.tab = tab; render(); }

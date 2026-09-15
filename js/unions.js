@@ -1,9 +1,10 @@
 /* ---------- Union modal ---------- */
 function openUnionModal(id, presetWolfA){
+  const readonly = ui.mode!=='edit';
   if(id){
-    ui.modal = { type:'union', draft: JSON.parse(JSON.stringify(state.unions.find(u=>u.id===id))), backTo: presetWolfA||null };
+    ui.modal = { type:'union', draft: JSON.parse(JSON.stringify(state.unions.find(u=>u.id===id))), backTo: presetWolfA||null, readonly };
   } else {
-    ui.modal = { type:'union', draft:{ id:null, treeId:state.currentTreeId, wolfA:presetWolfA, wolfB:null, status:'actuelle', startDate:'', endDate:'', note:'' }, backTo: presetWolfA };
+    ui.modal = { type:'union', draft:{ id:null, treeId:state.currentTreeId, wolfA:presetWolfA, wolfB:null, status:'actuelle', startDate:'', endDate:'', note:'' }, backTo: presetWolfA, readonly };
   }
   render();
 }

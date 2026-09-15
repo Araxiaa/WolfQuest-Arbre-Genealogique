@@ -47,6 +47,7 @@ function treeViewHTML(wolves){
   let maxX=700, maxY=520;
   treeWolves.forEach(w=>{ maxX=Math.max(maxX, w.pos.x+CARD_W+140); maxY=Math.max(maxY, w.pos.y+CARD_H+140); });
   const cardsHTML = treeWolves.map(w=>freeCardHTML(w.id)).join('');
+  const editing = ui.mode==='edit';
   return `
     <div class="tree-toolbar">
       <input list="wolfNamesList" id="treeSearchInput" class="tree-search" placeholder="🔍 Rechercher un loup…" onkeyup="if(event.key==='Enter')searchAndFocus()">
@@ -56,7 +57,7 @@ function treeViewHTML(wolves){
       <button class="btn btn-ghost btn-sm" onclick="zoomTree(0.15)">＋ Zoom</button>
       <button class="btn btn-ghost btn-sm" onclick="zoomTree(-0.15)">－ Zoom</button>
       <button class="btn btn-ghost btn-sm" onclick="zoomTree('reset')">100%</button>
-      <button class="btn btn-ghost btn-sm" onclick="resetTreeLayout()">↻ Réorganiser</button>
+      ${editing?`<button class="btn btn-ghost btn-sm" onclick="resetTreeLayout()">↻ Réorganiser</button>`:''}
     </div>
     <div class="tree-viewport">
       <div class="tree-scroll" id="treeScroll" onmousedown="onCanvasMouseDown(event)" onscroll="updateMinimap()">
@@ -79,7 +80,6 @@ function zoomTree(delta){
   if(el) el.style.transform = `scale(${window.__wqZoom})`;
   updateMinimap();
 }
-
 function glowLine(x1,y1,x2,y2,cls){
   const a=x1.toFixed(1), b=y1.toFixed(1), c=x2.toFixed(1), d=y2.toFixed(1);
   return `<line class="link-glow ${cls}" x1="${a}" y1="${b}" x2="${c}" y2="${d}"/><line class="link ${cls}" x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`;
@@ -110,7 +110,7 @@ function drawConnectors(){
   svg.innerHTML = out;
 }
 
-/* ---------- Drag a card ---------- */
+/* ---------- Drag a card (edit mode only) ---------- */
 function onCardMouseDown(e, wolfId){
   if(e.button!==0) return;
   e.stopPropagation(); e.preventDefault();
@@ -215,5 +215,5 @@ function minimapJump(e){
   scroller.scrollTo({ left:clickX*zoom-scroller.clientWidth/2, top:clickY*zoom-scroller.clientHeight/2, behavior:'smooth' });
 }
 
-window.addEventListener('resize', ()=>{ if(ui.view==='arbre' && currentTree()) updateMinimap(); });
-if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>{ if(ui.view==='arbre' && currentTree()){ drawConnectors(); updateMinimap(); } }); }
+window.addEventListener('resize', ()=>{ if(ui.screen==='tree' && ui.view==='arbre' && currentTree()) updateMinimap(); });
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>{ if(ui.screen==='tree' && ui.view==='arbre' && currentTree()){ drawConnectors(); updateMinimap(); } }); }
