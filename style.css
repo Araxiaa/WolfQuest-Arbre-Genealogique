@@ -95,35 +95,47 @@ textarea{resize:vertical; min-height:70px;}
 .wolf-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px;}
 
 /* wolf card */
-.wolf-card{display:flex; flex-direction:column; align-items:center; width:150px; background:var(--card-bg); border:1px solid var(--line); border-radius:var(--radius); padding:10px; box-shadow:var(--shadow); text-align:center; flex-shrink:0;}
-.wolf-card--small{width:118px; padding:7px;}
+.wolf-card{position:relative; display:flex; flex-direction:column; align-items:center; width:158px; background:var(--card-bg); border:1px solid var(--line); border-radius:16px; padding:14px 10px 12px; box-shadow:var(--shadow); text-align:center; flex-shrink:0; z-index:1; transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;}
+.wolf-card:hover{transform:translateY(-3px); box-shadow:0 8px 22px rgba(36,56,43,0.18); border-color:var(--amber-soft);}
+.wolf-card--small{width:126px; padding:10px 8px 9px;}
 .wolf-card--ghost{opacity:.55; border-style:dashed;}
-.wolf-photo{width:74px; height:74px; border-radius:50%; overflow:hidden; background:var(--bg); display:flex; align-items:center; justify-content:center; margin-bottom:8px; border:2px solid var(--line);}
-.wolf-card--small .wolf-photo{width:54px; height:54px;}
+.wolf-card--ghost:hover{transform:none; box-shadow:var(--shadow);}
+.wolf-photo{position:relative; width:76px; height:76px; border-radius:50%; overflow:hidden; background:var(--bg); display:flex; align-items:center; justify-content:center; margin-bottom:9px; border:3px solid var(--status-ring, var(--line));}
+.wolf-card--small .wolf-photo{width:56px; height:56px; border-width:2px; margin-bottom:7px;}
 .wolf-photo img{width:100%; height:100%; object-fit:cover;}
 .wolf-photo-placeholder{font-size:24px; opacity:.4;}
-.wolf-card-name{font-family:var(--font-display); font-weight:600; font-size:14.5px; display:flex; align-items:center; gap:5px; justify-content:center;}
+.wolf-sex-badge{position:absolute; right:-2px; bottom:6px; width:20px; height:20px; border-radius:50%; background:var(--bg-panel); border:1.5px solid var(--card-bg); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink-soft); box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.wolf-card--small .wolf-sex-badge{width:16px; height:16px; font-size:9px; bottom:3px;}
+.wolf-card-name{font-family:var(--font-display); font-weight:600; font-size:15px; line-height:1.25;}
 .wolf-card--small .wolf-card-name{font-size:13px;}
-.wolf-sex{font-size:12px; color:var(--ink-soft); font-weight:400;}
-.wolf-card-status{display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink-soft); margin-top:3px;}
-.status-dot{width:7px; height:7px; border-radius:50%; display:inline-block;}
+.wolf-status-pill{display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.02em; padding:2px 10px; border-radius:10px; margin-top:6px;}
+.wolf-card--small .wolf-status-pill{font-size:9.5px; padding:1px 8px; margin-top:5px;}
 
 /* tree canvas */
 .tree-toolbar{display:flex; gap:8px; margin-bottom:14px;}
-.tree-scroll{overflow:auto; border:1px solid var(--line); border-radius:var(--radius-lg); background:var(--bg-panel); padding:34px;}
-.tree-canvas{display:inline-flex; flex-direction:column; gap:40px; transform-origin:top left;}
-.forest-divider{border-top:1px dashed var(--line); margin:6px 0;}
-.family-unit{display:inline-block;}
-.unit-row{display:flex; align-items:flex-start; gap:26px;}
-.branches{display:flex; flex-direction:column; gap:18px;}
-.union-branch{display:flex; flex-direction:column; gap:10px;}
-.union-pair{display:flex; align-items:center; gap:10px;}
-.union-icon{font-size:15px; color:var(--ember); background:var(--card-bg); border:1px solid var(--line); border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
-.children-row{display:flex; gap:22px; padding:14px 0 0 16px; margin-left:12px; border-left:2px dashed var(--line); flex-wrap:wrap;}
-.litter-block{display:flex; flex-direction:column; gap:6px;}
-.litter-tag{font-size:11px; color:var(--ink-soft); font-weight:600; background:var(--card-bg); border:1px solid var(--line); border-radius:6px; padding:2px 8px; align-self:flex-start;}
-.litter-pups{display:flex; gap:12px; flex-wrap:wrap;}
-.pup-wrap--ref{opacity:.7;}
+.tree-scroll{overflow:auto; border:1px solid var(--line); border-radius:var(--radius-lg); background:var(--bg-panel); padding:48px;
+  background-image: radial-gradient(circle, rgba(36,56,43,0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.tree-canvas{position:relative; display:inline-flex; flex-direction:column; gap:56px; transform-origin:top left;}
+.tree-lines{position:absolute; top:0; left:0; overflow:visible; pointer-events:none; z-index:0;}
+.link{fill:none; stroke-linecap:round;}
+.link-couple{stroke:var(--amber); stroke-width:2.5;}
+.link-couple.link-ex{stroke-dasharray:1 7; stroke:var(--slate); opacity:.8;}
+.link-drop, .link-bar{stroke:var(--moss); stroke-width:2;}
+.forest-divider{border-top:1px dashed var(--line); margin:10px 0;}
+.family-unit{display:inline-block; position:relative; z-index:1;}
+.unit-row{display:flex; align-items:flex-start; gap:34px;}
+.branches{display:flex; flex-direction:column; gap:24px;}
+.union-branch{display:flex; flex-direction:column; gap:14px;}
+.union-pair{display:flex; align-items:center; gap:12px;}
+.union-icon{font-size:16px; color:#fff; background:var(--amber); border:3px solid var(--bg-panel); border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,.2); position:relative; z-index:1;}
+.union-branch--ex .union-icon{background:var(--slate);}
+.children-row{display:flex; gap:28px; padding-top:26px; flex-wrap:wrap; position:relative;}
+.litter-block{display:flex; flex-direction:column; align-items:center; gap:8px;}
+.litter-tag{font-size:10.5px; color:var(--ink-soft); font-weight:600; background:var(--card-bg); border:1px solid var(--line); border-radius:12px; padding:3px 11px; letter-spacing:.02em;}
+.litter-pups{display:flex; gap:16px; flex-wrap:wrap; justify-content:center;}
+.pup-wrap--ref{opacity:.65;}
 
 /* Modal */
 .overlay{position:fixed; inset:0; background:rgba(20,20,15,.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50;}

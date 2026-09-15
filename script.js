@@ -281,6 +281,9 @@ function linkExistingPup(litterId){
 /* ---------- Rendering ---------- */
 function render(){
   document.getElementById('app').innerHTML = appHTML();
+  if(ui.view==='arbre' && currentTree()){
+    requestAnimationFrame(drawConnectors);
+  }
 }
 
 function appHTML(){
@@ -373,9 +376,9 @@ function wolfCardHTML(wolfId, opts){
   const photo = w.portrait ? `<img src="${w.portrait}" alt="">` : `<div class="wolf-photo-placeholder">🐾</div>`;
   const sexIcon = w.sex==='M'?'♂':w.sex==='F'?'♀':'?';
   return `<button class="wolf-card ${opts.small?'wolf-card--small':''}" onclick="openWolfModal('${w.id}')">
-    <div class="wolf-photo">${photo}</div>
-    <div class="wolf-card-name">${escapeHTML(w.name)}<span class="wolf-sex">${sexIcon}</span></div>
-    <div class="wolf-card-status"><span class="status-dot" style="background:${color}"></span>${w.status||'—'}</div>
+    <div class="wolf-photo" style="--status-ring:${color};">${photo}<span class="wolf-sex-badge">${sexIcon}</span></div>
+    <div class="wolf-card-name">${escapeHTML(w.name)}</div>
+    <span class="wolf-status-pill" style="background:${color}22; color:${color};">${w.status||'—'}</span>
   </button>`;
 }
 function ghostCardHTML(){
@@ -408,6 +411,7 @@ function treeViewHTML(wolves){
     </div>
     <div class="tree-scroll">
       <div class="tree-canvas" id="treeCanvas" style="transform:scale(${window.__wqZoom||1});">
+        <svg class="tree-lines" id="treeLines"></svg>
         ${blocks.join('<div class="forest-divider"></div>')}
       </div>
     </div>
@@ -419,6 +423,61 @@ function zoomTree(delta){
   const el = document.getElementById('treeCanvas');
   if(el) el.style.transform = `scale(${window.__wqZoom})`;
 }
+
+/* ---------- Connector lines (drawn after layout, in the canvas's own coordinate space) ---------- */
+function drawConnectors(){
+  const canvas = document.getElementById('treeCanvas');
+  const svg = document.getElementById('treeLines');
+  if(!canvas || !svg) return;
+  const zoom = window.__wqZoom || 1;
+  const canvasRect = canvas.getBoundingClientRect();
+  function pt(el){
+    const r = el.getBoundingClientRect();
+    return {
+      left:(r.left-canvasRect.left)/zoom, right:(r.right-canvasRect.left)/zoom,
+      top:(r.top-canvasRect.top)/zoom, bottom:(r.bottom-canvasRect.top)/zoom,
+      midX:(r.left-canvasRect.left)/zoom + r.width/zoom/2,
+      midY:(r.top-canvasRect.top)/zoom + r.height/zoom/2
+    };
+  }
+  let paths = '';
+  state.unions.filter(u=>u.treeId===state.currentTreeId).forEach(u=>{
+    const pairEl = canvas.querySelector(`.union-pair[data-union-id="${u.id}"]`);
+    if(!pairEl) return;
+    const unitRow = pairEl.closest('.unit-row');
+    const primaryCard = unitRow ? unitRow.querySelector(':scope > .wolf-card') : null;
+    const partnerCard = pairEl.querySelector('.wolf-card');
+    const iconEl = pairEl.querySelector('.union-icon');
+    const exClass = u.status==='ex' ? 'link-ex' : '';
+    if(primaryCard && partnerCard){
+      const a = pt(primaryCard), b = pt(partnerCard);
+      paths += `<path class="link link-couple ${exClass}" d="M${a.right.toFixed(1)},${a.midY.toFixed(1)} L${b.left.toFixed(1)},${b.midY.toFixed(1)}"/>`;
+    }
+    const childrenRow = canvas.querySelector(`.children-row[data-union-id="${u.id}"]`);
+    if(childrenRow && iconEl){
+      const childPts = Array.from(childrenRow.querySelectorAll('.pup-wrap')).map(w=>{
+        const card = w.querySelector('.wolf-card'); return card ? pt(card) : null;
+      }).filter(Boolean);
+      if(childPts.length){
+        const ic = pt(iconEl);
+        const startX = ic.midX, startY = ic.bottom;
+        const barY = startY + 18;
+        const xs = childPts.map(c=>c.midX);
+        const minX = Math.min(...xs, startX), maxX = Math.max(...xs, startX);
+        paths += `<path class="link link-drop" d="M${startX.toFixed(1)},${startY.toFixed(1)} L${startX.toFixed(1)},${barY.toFixed(1)}"/>`;
+        if(childPts.length>1) paths += `<path class="link link-bar" d="M${minX.toFixed(1)},${barY.toFixed(1)} L${maxX.toFixed(1)},${barY.toFixed(1)}"/>`;
+        childPts.forEach(c=>{
+          paths += `<path class="link link-drop" d="M${c.midX.toFixed(1)},${barY.toFixed(1)} L${c.midX.toFixed(1)},${c.top.toFixed(1)}"/>`;
+        });
+      }
+    }
+  });
+  svg.innerHTML = paths;
+  svg.setAttribute('width', canvas.scrollWidth);
+  svg.setAttribute('height', canvas.scrollHeight);
+}
+window.addEventListener('resize', ()=>{ if(ui.view==='arbre' && currentTree()) drawConnectors(); });
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>{ if(ui.view==='arbre' && currentTree()) drawConnectors(); }); }
 
 function renderUnitHTML(wolfId, renderedPrimary, renderedUnionChildren){
   renderedPrimary.add(wolfId);
@@ -436,7 +495,7 @@ function renderUnitHTML(wolfId, renderedPrimary, renderedUnionChildren){
         renderedUnionChildren.add(u.id);
         const litters = state.litters.filter(l=>l.unionId===u.id);
         if(litters.length){
-          childrenHTML = `<div class="children-row">${litters.map(li=>{
+          childrenHTML = `<div class="children-row" data-union-id="${u.id}">${litters.map(li=>{
             const pups = li.pupIds.filter(pid=>getWolf(pid)).map(pid=>{
               if(renderedPrimary.has(pid)){
                 return `<div class="pup-wrap pup-wrap--ref">${wolfCardHTML(pid,{small:true})}</div>`;
@@ -448,8 +507,8 @@ function renderUnitHTML(wolfId, renderedPrimary, renderedUnionChildren){
         }
       }
       const icon = u.status==='actuelle' ? '♡' : '⚮';
-      return `<div class="union-branch">
-        <div class="union-pair"><span class="union-icon">${icon}</span>${partnerHTML}</div>
+      return `<div class="union-branch ${u.status==='ex'?'union-branch--ex':''}">
+        <div class="union-pair" data-union-id="${u.id}"><span class="union-icon">${icon}</span>${partnerHTML}</div>
         ${childrenHTML}
       </div>`;
     }).join('');
