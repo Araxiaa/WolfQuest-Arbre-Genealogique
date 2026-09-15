@@ -113,6 +113,7 @@ textarea{resize:vertical; min-height:70px;}
 .link-couple.link-glow{stroke:var(--amber); stroke-width:5; opacity:.5;}
 .link-lineage{stroke:var(--moon); stroke-width:1.6; opacity:.9;}
 .link-lineage.link-glow{stroke:var(--moon); stroke-width:4; opacity:.3;}
+.link-junction{fill:var(--moon); filter:drop-shadow(0 0 3px var(--moon));}
 .wolf-card-free{position:absolute; cursor:grab; user-select:none; width:150px;}
 .wolf-card-free:active{cursor:grabbing;}
 .wolf-card-free--ro{cursor:pointer;}
