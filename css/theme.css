@@ -141,11 +141,24 @@ textarea{resize:vertical; min-height:70px;}
 .portrait-preview img{width:100%; height:100%; object-fit:cover;}
 .file-btn{display:inline-block; font-size:12.5px;}
 
+.wolf-modal-banner{display:flex; align-items:center; gap:16px; padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid var(--line);}
+.wolf-photo--lg{width:74px; height:74px;}
+.wolf-modal-banner-name{font-family:var(--font-display); font-size:21px; font-weight:700;}
+.family-section-title{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin:16px 0 8px; font-weight:700;}
+.family-section-title:first-of-type{margin-top:0;}
+.family-chip-row{display:flex; flex-wrap:wrap; gap:8px 0;}
+.family-chip{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:20px; padding:4px 14px 4px 4px; background:var(--card-bg); font-size:13px; font-weight:600; color:var(--ink); margin-right:8px;}
+.family-chip:hover{border-color:var(--amber); color:var(--amber);}
+.family-chip-photo{width:26px; height:26px; border-radius:50%; overflow:hidden; background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;}
+.family-chip-photo img{width:100%; height:100%; object-fit:cover;}
+
 .skill-row{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
 .skill-row:last-child{border-bottom:none;}
 .skill-name{font-weight:600; font-size:13.5px;}
 .skill-stepper{display:flex; align-items:center; gap:10px;}
 .stepper-btn{width:28px; height:28px; border-radius:50%; border:1px solid var(--line); background:var(--card-bg); color:var(--ink); font-size:15px; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center;}
+.skill-track{width:64px; height:6px; background:var(--line); border-radius:4px; overflow:hidden;}
+.skill-fill{height:100%; background:var(--amber); border-radius:4px;}
 .skill-val{min-width:26px; text-align:center; font-family:var(--font-display); font-weight:700; font-size:15px;}
 
 .perk-entry{border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:12px; background:var(--card-bg);}
