@@ -72,6 +72,7 @@ function treeViewHTML(wolves){
       <div class="tree-scroll" id="treeScroll" onmousedown="onCanvasMouseDown(event)" onscroll="updateMinimap()">
         <div class="tree-canvas" id="treeCanvas" style="width:${maxX}px; height:${maxY}px; transform:scale(${window.__wqZoom||1});">
           <svg class="tree-lines" id="treeLines" width="${maxX}" height="${maxY}"></svg>
+          <div class="tree-line-labels" id="treeLineLabels"></div>
           ${cardsHTML}
         </div>
       </div>
@@ -95,9 +96,10 @@ function glowLine(x1,y1,x2,y2,cls){
 }
 function drawConnectors(){
   const svg = document.getElementById('treeLines');
+  const labelsLayer = document.getElementById('treeLineLabels');
   if(!svg) return;
   const treeId = state.currentTreeId;
-  let out = '';
+  let out = '', labels = '';
   state.unions.filter(u=>u.treeId===treeId).forEach(u=>{
     const A = getWolf(u.wolfA); if(!A||!A.pos) return;
     const B = u.wolfB ? getWolf(u.wolfB) : null;
@@ -110,26 +112,48 @@ function drawConnectors(){
       dropOrigin = {x:(aBottom.x+bBottom.x)/2, y:Math.max(aBottom.y,bBottom.y)};
       out += glowLine(aCenter.x,aCenter.y,bCenter.x,bCenter.y, `link-couple ${u.status==='ex'?'link-ex':''}`);
     }
-    const childPts = [];
-    state.litters.filter(l=>l.unionId===u.id).forEach(li=>{
-      li.pupIds.forEach(pid=>{
-        const p = getWolf(pid); if(!p||!p.pos) return;
-        childPts.push({x:p.pos.x+CARD_W/2, y:p.pos.y});
-      });
-    });
-    if(childPts.length){
-      const stubY = dropOrigin.y + 28;
-      out += glowLine(dropOrigin.x, dropOrigin.y, dropOrigin.x, stubY, 'link-lineage');
-      const xs = childPts.map(c=>c.x);
-      const minX = Math.min(...xs, dropOrigin.x), maxX = Math.max(...xs, dropOrigin.x);
+    const litters = state.litters.filter(l=>l.unionId===u.id).map(li=>({
+      li, pts: li.pupIds.map(pid=>getWolf(pid)).filter(p=>p&&p.pos).map(p=>({x:p.pos.x+CARD_W/2, y:p.pos.y}))
+    })).filter(g=>g.pts.length);
+    if(!litters.length) return;
+    const trunkY = dropOrigin.y + 26;
+    out += glowLine(dropOrigin.x, dropOrigin.y, dropOrigin.x, trunkY, 'link-lineage');
+    out += `<circle class="link-junction" cx="${dropOrigin.x.toFixed(1)}" cy="${trunkY.toFixed(1)}" r="3.5"/>`;
+    if(litters.length===1){
+      const g = litters[0];
+      const stubY = trunkY + 22;
+      out += glowLine(dropOrigin.x, trunkY, dropOrigin.x, stubY, 'link-lineage');
+      const xs = g.pts.map(c=>c.x);
+      const minX=Math.min(...xs,dropOrigin.x), maxX=Math.max(...xs,dropOrigin.x);
       if(maxX-minX>1) out += glowLine(minX, stubY, maxX, stubY, 'link-lineage');
-      out += `<circle class="link-junction" cx="${dropOrigin.x.toFixed(1)}" cy="${stubY.toFixed(1)}" r="3.5"/>`;
-      childPts.forEach(c=>{
-        out += glowLine(c.x, stubY, c.x, c.y, 'link-lineage');
+      g.pts.forEach(c=> out += glowLine(c.x, stubY, c.x, c.y, 'link-lineage'));
+      if(g.li.date) labels += litterLabelHTML(dropOrigin.x, stubY, g.li.date);
+    } else {
+      const groupCenters = litters.map(g=>{
+        const xs=g.pts.map(c=>c.x); return (Math.min(...xs)+Math.max(...xs))/2;
+      });
+      const barY = trunkY + 20;
+      const minGX=Math.min(...groupCenters,dropOrigin.x), maxGX=Math.max(...groupCenters,dropOrigin.x);
+      if(maxGX-minGX>1) out += glowLine(minGX, barY, maxGX, barY, 'link-lineage');
+      litters.forEach((g,i)=>{
+        const gx = groupCenters[i];
+        out += glowLine(gx, trunkY, gx, barY, 'link-lineage');
+        const stubY = barY + 22;
+        out += glowLine(gx, barY, gx, stubY, 'link-lineage');
+        const xs = g.pts.map(c=>c.x);
+        const minX=Math.min(...xs,gx), maxX=Math.max(...xs,gx);
+        if(maxX-minX>1) out += glowLine(minX, stubY, maxX, stubY, 'link-lineage');
+        out += `<circle class="link-junction link-junction--sm" cx="${gx.toFixed(1)}" cy="${barY.toFixed(1)}" r="2.6"/>`;
+        g.pts.forEach(c=> out += glowLine(c.x, stubY, c.x, c.y, 'link-lineage'));
+        if(g.li.date) labels += litterLabelHTML(gx, stubY, g.li.date);
       });
     }
   });
   svg.innerHTML = out;
+  if(labelsLayer) labelsLayer.innerHTML = labels;
+}
+function litterLabelHTML(x,y,date){
+  return `<div class="litter-label" style="left:${x.toFixed(1)}px; top:${(y+6).toFixed(1)}px;">🐾 ${escapeHTML(date)}</div>`;
 }
 
 /* ---------- Drag a card (edit mode only) ---------- */
